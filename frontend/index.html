@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Urban Growth AI</title>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
+</head>
+
+<body>
+<h1>🏙️ Urban Growth Intelligence</h1>
+
+<input id="location" placeholder="Location Code">
+<input id="sqft" placeholder="Sqft">
+<input id="bath" placeholder="Bath">
+<button onclick="predict()">Predict</button>
+
+<h2 id="result"></h2>
+
+<div id="map" style="height:500px;"></div>
+
+<script>
+mapboxgl.accessToken = "YOUR_MAPBOX_TOKEN";
+
+const map = new mapboxgl.Map({
+    container: "map",
+    style: "mapbox://styles/mapbox/light-v10",
+    center: [77.59, 12.97],
+    zoom: 10
+});
+
+function predict() {
+    fetch("http://127.0.0.1:5000/predict", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            location: document.getElementById("location").value,
+            sqft: document.getElementById("sqft").value,
+            bath: document.getElementById("bath").value
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("result").innerText =
+            "Now: ₹" + data.current_price + " | Future: ₹" + data.future_price;
+    });
+}
+fetch("http://127.0.0.1:5000/growth")
+.then(res => res.json())
+.then(data => {
+    data.forEach(p => {
+
+        let color = "green";
+        if (p.growth_score > 5) color = "red";
+        else if (p.growth_score > 2) color = "orange";
+
+        const el = document.createElement('div');
+        el.style.backgroundColor = color;
+        el.style.width = '15px';
+        el.style.height = '15px';
+        el.style.borderRadius = '50%';
+
+        new mapboxgl.Marker(el)
+        .setLngLat([p.lng, p.lat])
+        .setPopup(new mapboxgl.Popup().setText(
+            `${p.location} | Growth: ${p.growth_score.toFixed(2)}`
+        ))
+        .addTo(map);
+    });
+});
+</script>
+
+</body>
+</html>

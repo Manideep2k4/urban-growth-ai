@@ -2,6 +2,5 @@ flask
 flask-cors
 pandas
 numpy
-scikit-learn
-tensorflow
+scikit-learngit
 gunicorn
